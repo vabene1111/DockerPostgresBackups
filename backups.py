@@ -106,7 +106,7 @@ def get_dump_path():
 def create_pg_dump():
     print("Creating DB dump ... ")
     os.chdir(docker_compose_path)
-    out = os.system('docker-compose up -d ' + pg_docker_container)
+    out = os.popen('docker-compose up -d ' + pg_docker_container).read()
     os.system('docker-compose exec ' + pg_docker_container + ' pg_dumpall -U ' + pg_docker_user + ' > ' + get_dump_path())
     if 'is up-to-date' in out:
         os.system('docker-compose stop ' + pg_docker_container)
