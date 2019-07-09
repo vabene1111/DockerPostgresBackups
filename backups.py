@@ -260,9 +260,9 @@ def main():
     if args.restore:
         get_latest(BACKUP_EXTENSION)
 
-    delete_old()
-
-    sync_storage()
+    if args.backup or args.dump:
+        delete_old()
+        sync_storage()
 
 
 if __name__ == "__main__":
