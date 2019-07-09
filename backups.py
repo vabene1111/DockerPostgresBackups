@@ -33,6 +33,7 @@ delete_days = 7
 BACKUP_EXTENSION = '.tar.gz'
 DUMP_EXTENSION = '.sql'
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
 
@@ -89,9 +90,8 @@ def restore_backup(filename):
     os.chdir(docker_compose_path)
     os.system('docker-compose stop ' + pg_docker_container)
 
-    shutil.rmtree(backup_source, ignore_errors=False, onerror=None)
-
-    os.makedirs(backup_source)
+    if os.path.exists(backup_source):
+        shutil.rmtree(backup_source, ignore_errors=False, onerror=None)
 
     tar = tarfile.open(filename)
     tar.extractall(path=(os.path.abspath(os.path.join(backup_source, '..'))))
@@ -120,7 +120,8 @@ def load_pg_dump(file):
     os.chdir(docker_compose_path)
     os.system('docker-compose stop ' + pg_docker_container)
 
-    shutil.rmtree(backup_source, ignore_errors=False, onerror=None)
+    if os.path.exists(backup_source):
+        shutil.rmtree(backup_source, ignore_errors=False, onerror=None)
 
     os.system('docker-compose up -d ' + pg_docker_container)
 
@@ -209,7 +210,7 @@ def delete_old():
 
 
 def load_config(config_name):
-    global storage_dir, dump_filename, backup_filename, backup_timestamp, backup_timestamp_format, backup_source, pg_docker_container, pg_docker_user, rclone_target, rclone_path, delete_days,docker_compose_path
+    global storage_dir, dump_filename, backup_filename, backup_timestamp, backup_timestamp_format, backup_source, pg_docker_container, pg_docker_user, rclone_target, rclone_path, delete_days, docker_compose_path
 
     config = configparser.ConfigParser()
     config.read("config.ini")
