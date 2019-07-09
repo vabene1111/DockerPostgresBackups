@@ -2,3 +2,4 @@
 venv/*
 backups/*
 test_folder/*
+config.ini
