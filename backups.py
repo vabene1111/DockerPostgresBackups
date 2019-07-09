@@ -33,10 +33,6 @@ delete_days = 7
 BACKUP_EXTENSION = '.tar.gz'
 DUMP_EXTENSION = '.sql'
 
-if not storage_dir.endswith("/"):
-    storage_dir += "/"
-
-
 def parse_args():
     parser = argparse.ArgumentParser()
 
@@ -217,6 +213,15 @@ def load_config(config_name):
     rclone_target = config.get(config_name, "rclone_target")
     rclone_path = config.get(config_name, "rclone_path")
     delete_days = int(config.get(config_name, "delete_days"))
+
+    if not storage_dir.endswith("/"):
+        storage_dir += "/"
+
+    if not docker_compose_path.endswith("/"):
+        docker_compose_path += "/"
+
+    if not backup_source.endswith("/"):
+        backup_source += "/"
 
 
 def main():
