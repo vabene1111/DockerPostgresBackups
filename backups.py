@@ -9,6 +9,7 @@ It can also simply create archives of any folder (for example a postgres volume 
 Requires the docker container to be setup with docker compose.
 """
 import os
+import glob
 import argparse
 import datetime
 import shutil
@@ -145,6 +146,20 @@ def choose_file(extension):
         restore_backup(filename)
 
 
+def get_latest(extension):
+    print('Searching latest ' + extension)
+    list_of_files = glob.glob(storage_dir + '*' + extension)
+    filename = max(list_of_files, key=os.path.getctime)
+
+    print("Found " + filename)
+
+    if extension == DUMP_EXTENSION:
+        load_pg_dump(filename)
+
+    if extension == BACKUP_EXTENSION:
+        restore_backup(filename)
+
+
 def sync_storage():
     if rclone_target == '':
         return
@@ -154,8 +169,29 @@ def sync_storage():
     print('Storage directory synced!')
 
 
+def delete_old():
+    if delete_days == -1:
+        return
+
+    print("Deleting old backups ...")
+
+    cutoff = time.time() - (delete_days * 86400)
+
+    files = os.listdir(storage_dir)
+
+    for f in files:
+        if os.path.isfile(storage_dir + f):
+            t = os.stat(storage_dir + f)
+            c = t.st_ctime
+
+            if c < cutoff:
+                os.remove(storage_dir + f)
+
+    print('Finished deleting old backups.')
+
+
 def load_config(config_name):
-    global storage_dir, dump_filename, backup_filename, backup_timestamp, backup_timestamp_format, backup_source, pg_docker_container, pg_docker_user, rclone_target, rclone_path
+    global storage_dir, dump_filename, backup_filename, backup_timestamp, backup_timestamp_format, backup_source, pg_docker_container, pg_docker_user, rclone_target, rclone_path, delete_days
 
     config = configparser.ConfigParser()
     config.read("config.ini")
@@ -170,6 +206,7 @@ def load_config(config_name):
     pg_docker_user = config.get(config_name, "pg_docker_user")
     rclone_target = config.get(config_name, "rclone_target")
     rclone_path = config.get(config_name, "rclone_path")
+    delete_days = config.get(config_name, "delete_days")
 
 
 def main():
@@ -185,11 +222,19 @@ def main():
     if args.dump:
         create_pg_dump()
 
-    if args.load:
+    if args.load_specific:
         choose_file(DUMP_EXTENSION)
 
-    if args.restore:
+    if args.restore_specific:
         choose_file(BACKUP_EXTENSION)
+
+    if args.load:
+        get_latest(DUMP_EXTENSION)
+
+    if args.restore:
+        get_latest(BACKUP_EXTENSION)
+
+    delete_old()
 
     sync_storage()
 
