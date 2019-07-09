@@ -1,5 +1,5 @@
 [default]
-# Local directory to store backups in
+# Absolute path to directory to store backups in
 storage_dir: ./backups/
 
 # Filename of the data directory backup archive
@@ -17,6 +17,9 @@ backup_timestamp_format: %%Y-%%m-%%d_%%H-%%M-%%S
 
 # Postgres data directory (mapping of data dir in postgres container)
 backup_source: test_folder
+
+# Absolute path to, but not including, the docker-compose.yml
+docker_compose_path:
 
 # Name of the postgres docker container
 pg_docker_container: db

@@ -23,10 +23,12 @@ backup_filename = ''
 backup_timestamp = True
 backup_timestamp_format = ''
 backup_source = ''
+docker_compose_path = ''
 pg_docker_container = ''
 pg_docker_user = ''
 rclone_target = ''
 rclone_path = ''
+delete_days = 7
 
 BACKUP_EXTENSION = '.tar.gz'
 DUMP_EXTENSION = '.sql'
@@ -102,6 +104,7 @@ def get_dump_path():
 
 def create_pg_dump():
     print("Creating DB dump ... ")
+    os.chdir(docker_compose_path)
     os.system('docker-compose up -d' + pg_docker_container)
     os.system('docker-compose exec ' + pg_docker_container + ' pg_dumpall -U ' + pg_docker_user + ' > ' + get_dump_path())
     os.system('docker-compose stop ' + pg_docker_container)
@@ -110,6 +113,7 @@ def create_pg_dump():
 
 def load_pg_dump(file):
     print("Loading DB dump ... ")
+    os.chdir(docker_compose_path)
     os.system('docker-compose up -d' + pg_docker_container)
     time.sleep(2)
     os.system('docker-compose exec -T ' + pg_docker_container + ' psql -U ' + pg_docker_user + ' postgres < ' + file)
@@ -191,7 +195,7 @@ def delete_old():
 
 
 def load_config(config_name):
-    global storage_dir, dump_filename, backup_filename, backup_timestamp, backup_timestamp_format, backup_source, pg_docker_container, pg_docker_user, rclone_target, rclone_path, delete_days
+    global storage_dir, dump_filename, backup_filename, backup_timestamp, backup_timestamp_format, backup_source, pg_docker_container, pg_docker_user, rclone_target, rclone_path, delete_days,docker_compose_path
 
     config = configparser.ConfigParser()
     config.read("config.ini")
@@ -202,6 +206,7 @@ def load_config(config_name):
     backup_timestamp = config.get(config_name, "backup_timestamp")
     backup_timestamp_format = config.get(config_name, "backup_timestamp_format")
     backup_source = config.get(config_name, "backup_source")
+    docker_compose_path = config.get(config_name, "docker_compose_path")
     pg_docker_container = config.get(config_name, "pg_docker_container")
     pg_docker_user = config.get(config_name, "pg_docker_user")
     rclone_target = config.get(config_name, "rclone_target")
