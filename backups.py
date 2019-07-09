@@ -79,9 +79,13 @@ def create_backup():
         return tarinfo
 
     print("Creating backup ...")
+    os.system('docker-compose stop ' + pg_docker_container)
+
     tar = tarfile.open(get_backup_path(), "w:gz")
     tar.add(backup_source, filter=reset)
     tar.close()
+
+    os.system('docker-compose up -d ' + pg_docker_container)
     print("Backup created!")
 
 
