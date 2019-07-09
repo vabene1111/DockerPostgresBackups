@@ -86,11 +86,16 @@ def create_backup():
 
 def restore_backup(filename):
     print("Restoring backup ...")
+    os.chdir(docker_compose_path)
+    os.system('docker-compose stop ' + pg_docker_container)
+
     shutil.rmtree(backup_source, ignore_errors=False, onerror=None)
 
     tar = tarfile.open(filename)
     tar.extractall(path=(os.path.abspath(os.path.join(backup_source, '..'))))
     tar.close()
+
+    os.system('docker-compose up -d ' + pg_docker_container)
     print("Backup restored!")
 
 
@@ -111,11 +116,15 @@ def create_pg_dump():
 def load_pg_dump(file):
     print("Loading DB dump ... ")
     os.chdir(docker_compose_path)
-    out = os.system('docker-compose up -d ' + pg_docker_container)
+    os.system('docker-compose stop ' + pg_docker_container)
+
+    shutil.rmtree(backup_source, ignore_errors=False, onerror=None)
+
+    os.system('docker-compose up -d ' + pg_docker_container)
+
     time.sleep(2)
     os.system('docker-compose exec -T ' + pg_docker_container + ' psql -U ' + pg_docker_user + ' postgres < ' + file)
-    if 'is up-to-date' in out:
-        os.system('docker-compose stop ' + pg_docker_container)
+
     print("DB dump loaded!")
 
 
