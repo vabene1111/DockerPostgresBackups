@@ -45,9 +45,14 @@ rclone_path = ''
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", help="path to mod root directory (not addons)")
-    parser.add_argument("-k", "--public-key-path",
-                        help="path to directory for storing generated public key (default <base path>/keys)")
+
+    parser.add_argument('config', nargs='?', default='default_config.py')  # TODO implement
+
+    parser.add_argument("-r", help="restore latest dump", action="store_true")  # TODO implement
+    parser.add_argument("-R", help="restore specified dump")  # TODO implement
+
+    parser.add_argument("-c", help="restore latest backup", action="store_true")  # TODO implement
+    parser.add_argument("-C", help="restore specified backup")  # TODO implement
 
     return parser.parse_args()
 
