@@ -1,3 +1,6 @@
+# IMPORTANT NOTE
+This utility is not yet fully working ! Use at your own risk!
+
 # Docker Postgres Backup
 This script is primarily intended to make it easier to backup and restore postgres database containers running with 
 docker compose but it can also be used to backup any other directory.
