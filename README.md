@@ -37,3 +37,6 @@ optional arguments:
   -o DELETE, --delete DELETE
                         delete backups older than a certain amount of days
 ```
+
+## License
+See [LICENS.md](https://github.com/vabene1111/DockerPostgresBackups/blob/master/LICENSE.md)

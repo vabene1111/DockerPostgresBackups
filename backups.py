@@ -101,19 +101,21 @@ def get_dump_path():
 def create_pg_dump():
     print("Creating DB dump ... ")
     os.chdir(docker_compose_path)
-    os.system('docker-compose up -d ' + pg_docker_container)
+    out = os.system('docker-compose up -d ' + pg_docker_container)
     os.system('docker-compose exec ' + pg_docker_container + ' pg_dumpall -U ' + pg_docker_user + ' > ' + get_dump_path())
-    os.system('docker-compose stop ' + pg_docker_container)
+    if 'is up-to-date' in out:
+        os.system('docker-compose stop ' + pg_docker_container)
     print("DB dump created in " + get_dump_path())
 
 
 def load_pg_dump(file):
     print("Loading DB dump ... ")
     os.chdir(docker_compose_path)
-    os.system('docker-compose up -d ' + pg_docker_container)
+    out = os.system('docker-compose up -d ' + pg_docker_container)
     time.sleep(2)
     os.system('docker-compose exec -T ' + pg_docker_container + ' psql -U ' + pg_docker_user + ' postgres < ' + file)
-    os.system('docker-compose stop ' + pg_docker_container)
+    if 'is up-to-date' in out:
+        os.system('docker-compose stop ' + pg_docker_container)
     print("DB dump loaded!")
 
 
