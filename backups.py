@@ -105,7 +105,7 @@ def get_dump_path():
 def create_pg_dump():
     print("Creating DB dump ... ")
     os.chdir(docker_compose_path)
-    os.system('docker-compose up -d' + pg_docker_container)
+    os.system('docker-compose up -d ' + pg_docker_container)
     os.system('docker-compose exec ' + pg_docker_container + ' pg_dumpall -U ' + pg_docker_user + ' > ' + get_dump_path())
     os.system('docker-compose stop ' + pg_docker_container)
     print("DB dump created in " + get_dump_path())
@@ -114,7 +114,7 @@ def create_pg_dump():
 def load_pg_dump(file):
     print("Loading DB dump ... ")
     os.chdir(docker_compose_path)
-    os.system('docker-compose up -d' + pg_docker_container)
+    os.system('docker-compose up -d ' + pg_docker_container)
     time.sleep(2)
     os.system('docker-compose exec -T ' + pg_docker_container + ' psql -U ' + pg_docker_user + ' postgres < ' + file)
     os.system('docker-compose stop ' + pg_docker_container)
@@ -125,7 +125,7 @@ def choose_file(extension):
     dir_list = os.listdir(storage_dir)
     print(storage_dir)
     if len(dir_list) == 0:
-        print('There where no files ' + extension + ' found that could be restored!')
+        print('There where no ' + extension + ' files found that could be restored!')
         return
 
     print("Please choose the file you want to restore:")
@@ -153,6 +153,11 @@ def choose_file(extension):
 def get_latest(extension):
     print('Searching latest ' + extension)
     list_of_files = glob.glob(storage_dir + '*' + extension)
+
+    if len(list_of_files) == 0:
+        print('There where no ' + extension + ' files found that could be restored!')
+        return
+
     filename = max(list_of_files, key=os.path.getctime)
 
     print("Found " + filename)
@@ -211,7 +216,7 @@ def load_config(config_name):
     pg_docker_user = config.get(config_name, "pg_docker_user")
     rclone_target = config.get(config_name, "rclone_target")
     rclone_path = config.get(config_name, "rclone_path")
-    delete_days = config.get(config_name, "delete_days")
+    delete_days = int(config.get(config_name, "delete_days"))
 
 
 def main():
