@@ -79,6 +79,7 @@ def create_backup():
         return tarinfo
 
     print("Creating backup ...")
+    os.chdir(docker_compose_path)
     os.system('docker-compose stop ' + pg_docker_container)
 
     tar = tarfile.open(get_backup_path(), "w:gz")
