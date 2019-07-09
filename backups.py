@@ -12,43 +12,20 @@ import os
 import argparse
 import datetime
 import shutil
-import sys
+import configparser
 import tarfile
 import time
 
-# --------------- CONFIG ---------------
-
-# Local directory to store backups in
-storage_dir = './backups/'
-
-# Filename of the data directory backup archive
-dump_filename = 'dump_'
-
-# Filename of the postgres dump file
-backup_filename = 'backup_'
-
-# Include a timestamp in backup/dump filenames
+storage_dir = ''
+dump_filename = ''
+backup_filename = ''
 backup_timestamp = True
-
-# Define the format for timestamps (see http://strftime.org/ for format info)
-backup_timestamp_format = '%Y-%m-%d_%H-%M-%S'
-
-# Postgres data directory (mapping of data dir in postgres container)
-backup_source = 'test_folder'
-
-# Name of the postgres docker container
-pg_docker_container = 'db'
-
-# Username to use when dumping data
-pg_docker_user = 'dbuser'
-
-# Name of the rclone target
-rclone_target = ''  # TODO implement
-
-# Path on the rclone target
+backup_timestamp_format = ''
+backup_source = ''
+pg_docker_container = ''
+pg_docker_user = ''
+rclone_target = ''
 rclone_path = ''
-
-# --------------- CONFIG ---------------
 
 BACKUP_EXTENSION = '.tar.gz'
 DUMP_EXTENSION = '.sql'
@@ -60,16 +37,16 @@ if not storage_dir.endswith("/"):
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('config', nargs='?', default='default_config.py')  # TODO implement
+    parser.add_argument('config', help="config from config.ini that should be used", nargs='?', default='default')
 
     parser.add_argument("-d", '--dump', help="dump postgres database", action="store_true")
     parser.add_argument("-b", '--backup', help="create postgres folder backup", action="store_true")
 
     parser.add_argument("-l", '--load', help="load latest dump", action="store_true")  # TODO implement
-    parser.add_argument("-L", '--load-specific', help="load specified dump")  # TODO implement
+    parser.add_argument("-L", '--load-specific', help="load specified dump")
 
     parser.add_argument("-r", '--restore', help="restore latest backup", action="store_true")  # TODO implement
-    parser.add_argument("-R", '--restore-specific', help="restore specified backup")  # TODO implement
+    parser.add_argument("-R", '--restore-specific', help="restore specified backup")
 
     parser.add_argument("-o", '--delete', help="delete backups older than a certain amount of days")  # TODO implement
 
@@ -78,6 +55,7 @@ def parse_args():
 
 def make_backup_dir():
     if not os.path.exists(storage_dir):
+        print('Created Backup directory!')
         os.makedirs(storage_dir)
 
 
@@ -100,17 +78,21 @@ def create_backup():
         tarinfo.uname = tarinfo.gname = "root"  # TODO verify permissions work
         return tarinfo
 
+    print("Creating backup ...")
     tar = tarfile.open(get_backup_path(), "w:gz")
     tar.add(backup_source, filter=reset)
     tar.close()
+    print("Backup created!")
 
 
 def restore_backup(filename):
+    print("Restoring backup ...")
     shutil.rmtree(backup_source, ignore_errors=False, onerror=None)
 
     tar = tarfile.open(filename)
     tar.extractall(path=(os.path.abspath(os.path.join(backup_source, '..'))))
     tar.close()
+    print("Backup restored!")
 
 
 def get_dump_path():
@@ -118,21 +100,27 @@ def get_dump_path():
 
 
 def create_pg_dump():
+    print("Creating DB dump ... ")
+    os.system('docker-compose up -d' + pg_docker_container)
     os.system('docker-compose exec ' + pg_docker_container + ' pg_dumpall -U ' + pg_docker_user + ' > ' + get_dump_path())
+    os.system('docker-compose stop ' + pg_docker_container)
+    print("DB dump created in " + get_dump_path())
 
 
 def load_pg_dump(file):
+    print("Loading DB dump ... ")
     os.system('docker-compose up -d' + pg_docker_container)
     time.sleep(2)
     os.system('docker-compose exec -T ' + pg_docker_container + ' psql -U ' + pg_docker_user + ' postgres < ' + file)
     os.system('docker-compose stop ' + pg_docker_container)
+    print("DB dump loaded!")
 
 
 def choose_file(extension):
     dir_list = os.listdir(storage_dir)
-
+    print(storage_dir)
     if len(dir_list) == 0:
-        print('There where no files found that could be restored!')
+        print('There where no files ' + extension + ' found that could be restored!')
         return
 
     print("Please choose the file you want to restore:")
@@ -161,11 +149,33 @@ def sync_storage():
     if rclone_target == '':
         return
 
+    print('Starting backup sync ...')
     os.system('rclone sync ' + storage_dir + ' ' + rclone_target + ':' + rclone_path)
+    print('Storage directory synced!')
+
+
+def load_config(config_name):
+    global storage_dir, dump_filename, backup_filename, backup_timestamp, backup_timestamp_format, backup_source, pg_docker_container, pg_docker_user, rclone_target, rclone_path
+
+    config = configparser.ConfigParser()
+    config.read("config.ini")
+
+    storage_dir = config.get(config_name, "storage_dir")
+    dump_filename = config.get(config_name, "dump_filename")
+    backup_filename = config.get(config_name, "backup_filename")
+    backup_timestamp = config.get(config_name, "backup_timestamp")
+    backup_timestamp_format = config.get(config_name, "backup_timestamp_format")
+    backup_source = config.get(config_name, "backup_source")
+    pg_docker_container = config.get(config_name, "pg_docker_container")
+    pg_docker_user = config.get(config_name, "pg_docker_user")
+    rclone_target = config.get(config_name, "rclone_target")
+    rclone_path = config.get(config_name, "rclone_path")
 
 
 def main():
     args = parse_args()
+
+    load_config(args.config)
 
     make_backup_dir()
 
