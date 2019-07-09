@@ -91,6 +91,8 @@ def restore_backup(filename):
 
     shutil.rmtree(backup_source, ignore_errors=False, onerror=None)
 
+    os.makedirs(backup_source)
+
     tar = tarfile.open(filename)
     tar.extractall(path=(os.path.abspath(os.path.join(backup_source, '..'))))
     tar.close()
