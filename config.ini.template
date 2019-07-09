@@ -1,6 +1,6 @@
 [default]
 # Absolute path to directory to store backups in
-storage_dir: ./backups/
+storage_dir: /home/user/backups/
 
 # Filename of the data directory backup archive
 dump_filename: dump_
@@ -15,11 +15,11 @@ backup_timestamp: True
 # IMPORTANT: For the config to get parsed correctly you need to use two percent characters instead of one
 backup_timestamp_format: %%Y-%%m-%%d_%%H-%%M-%%S
 
-# Postgres data directory (mapping of data dir in postgres container)
-backup_source: test_folder
+# Absolute path to folder that should be backed up
+backup_source: /home/user/folder
 
 # Absolute path to, but not including, the docker-compose.yml
-docker_compose_path:
+docker_compose_path: /home/user/
 
 # Name of the postgres docker container
 pg_docker_container: db
