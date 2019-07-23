@@ -253,7 +253,7 @@ def main():
     global DEBUG
     args = parse_args()
 
-    if args.debug:
+    if args.verbose:
         DEBUG = True
 
     if DEBUG:
