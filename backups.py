@@ -189,6 +189,7 @@ def sync_storage():
         return
 
     print('Starting backup sync ...')
+    print('rclone sync ' + storage_dir + ' ' + rclone_target + ':' + rclone_path)
     os.system('rclone sync ' + storage_dir + ' ' + rclone_target + ':' + rclone_path)
     print('Storage directory synced!')
 
@@ -273,7 +274,6 @@ def main():
 
     if args.backup or args.dump or args.sync:
         sync_storage()
-
 
 
 if __name__ == "__main__":
