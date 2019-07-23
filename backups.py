@@ -42,13 +42,13 @@ def parse_args():
     parser.add_argument("-d", '--dump', help="dump postgres database", action="store_true")
     parser.add_argument("-b", '--backup', help="create postgres folder backup", action="store_true")
 
-    parser.add_argument("-l", '--load', help="load latest dump", action="store_true")  # TODO implement
+    parser.add_argument("-l", '--load', help="load latest dump", action="store_true")
     parser.add_argument("-L", '--load-specific', help="load specified dump")
 
-    parser.add_argument("-r", '--restore', help="restore latest backup", action="store_true")  # TODO implement
+    parser.add_argument("-r", '--restore', help="restore latest backup", action="store_true")
     parser.add_argument("-R", '--restore-specific', help="restore specified backup")
 
-    parser.add_argument("-o", '--delete', help="delete backups older than a certain amount of days")  # TODO implement
+    parser.add_argument("-s", '--sync', help="sync backups with rclone target")
 
     return parser.parse_args()
 
@@ -270,7 +270,10 @@ def main():
 
     if args.backup or args.dump:
         delete_old()
+
+    if args.backup or args.dump or args.sync:
         sync_storage()
+
 
 
 if __name__ == "__main__":
