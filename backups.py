@@ -50,7 +50,7 @@ def parse_args():
     parser.add_argument("-r", '--restore', help="restore latest backup", action="store_true")
     parser.add_argument("-R", '--restore-specific', help="restore specified backup")
 
-    parser.add_argument("-s", '--sync', help="sync backups with rclone target")
+    parser.add_argument("-s", '--sync', help="sync backups with rclone target",  action="store_true")
 
     parser.add_argument("-v", '--verbose', help="enables debugging output", action="store_true")
 
