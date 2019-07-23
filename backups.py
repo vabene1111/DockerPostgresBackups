@@ -125,8 +125,11 @@ def create_pg_dump():
     cmd_container_dump = 'docker-compose exec ' + pg_docker_container + ' pg_dumpall -U ' + pg_docker_user + ' > ' + get_dump_path()
     if DEBUG:
         print('creating dump: ' + cmd_container_dump)
+        test = os.popen('docker-compose exec ' + pg_docker_container + ' pg_dumpall -U ' + pg_docker_user).read()
+        print(test[0:100])
+
     os.system(cmd_container_dump)
-    
+
     if 'is up-to-date' in out:
         os.system('docker-compose stop ' + pg_docker_container)
     print("DB dump created in " + get_dump_path())
