@@ -52,7 +52,7 @@ def parse_args():
 
     parser.add_argument("-s", '--sync', help="sync backups with rclone target")
 
-    parser.add_argument("-d", '--debug', help="enables debugging output", action="store_true")
+    parser.add_argument("-v", '--verbose', help="enables debugging output", action="store_true")
 
     return parser.parse_args()
 
