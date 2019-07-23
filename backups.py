@@ -117,8 +117,16 @@ def get_dump_path():
 def create_pg_dump():
     print("Creating DB dump ... ")
     os.chdir(docker_compose_path)
-    out = os.popen('docker-compose up -d ' + pg_docker_container).read()
-    os.system('docker-compose exec ' + pg_docker_container + ' pg_dumpall -U ' + pg_docker_user + ' > ' + get_dump_path())
+    cmd_container_up = 'docker-compose up -d ' + pg_docker_container
+    if DEBUG:
+        print('starting container: ' + cmd_container_up)
+    out = os.popen(cmd_container_up).read()
+
+    cmd_container_dump = 'docker-compose exec ' + pg_docker_container + ' pg_dumpall -U ' + pg_docker_user + ' > ' + get_dump_path()
+    if DEBUG:
+        print('creating dump: ' + cmd_container_dump)
+    os.system(cmd_container_dump)
+    
     if 'is up-to-date' in out:
         os.system('docker-compose stop ' + pg_docker_container)
     print("DB dump created in " + get_dump_path())
