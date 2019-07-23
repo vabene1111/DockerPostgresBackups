@@ -33,6 +33,8 @@ delete_days = 7
 BACKUP_EXTENSION = '.tar.gz'
 DUMP_EXTENSION = '.sql'
 
+DEBUG = False
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -49,6 +51,8 @@ def parse_args():
     parser.add_argument("-R", '--restore-specific', help="restore specified backup")
 
     parser.add_argument("-s", '--sync', help="sync backups with rclone target")
+
+    parser.add_argument("-d", '--debug', help="enables debugging output", action="store_true")
 
     return parser.parse_args()
 
@@ -189,7 +193,8 @@ def sync_storage():
         return
 
     print('Starting backup sync ...')
-    print('rclone sync ' + storage_dir + ' ' + rclone_target + ':' + rclone_path)
+    if DEBUG:
+        print('rclone command: rclone sync ' + storage_dir + ' ' + rclone_target + ':' + rclone_path)
     os.system('rclone sync ' + storage_dir + ' ' + rclone_target + ':' + rclone_path)
     print('Storage directory synced!')
 
@@ -245,8 +250,14 @@ def load_config(config_name):
 
 
 def main():
+    global DEBUG
     args = parse_args()
 
+    if args.debug:
+        DEBUG = True
+
+    if DEBUG:
+        print('Loading Config:' + args.config)
     load_config(args.config)
 
     make_backup_dir()
