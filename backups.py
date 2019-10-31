@@ -242,10 +242,10 @@ def main():
     if args.load:
         get_latest()
 
-    if args.backup or args.dump:
+    if args.dump:
         delete_old()
 
-    if args.backup or args.dump or args.sync:
+    if args.dump or args.sync:
         sync_storage()
 
 
