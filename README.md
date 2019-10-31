@@ -1,16 +1,17 @@
-# IMPORTANT NOTE
-This utility is not yet fully working ! Use at your own risk!
+# Warning
+This script is still WIP. It works pretty well right now but sometimes the load command needs 
+to be executed twice to restore a db.
+More features and stability improvements are planned.
 
 # Docker Postgres Backup
 This script is primarily intended to make it easier to backup and restore postgres database containers running with 
 docker compose but it can also be used to backup any other directory.
 
-**Features**
-- Dump data from postgresql containers
-- Load dumps back into postgresql containers
-- Create folder backups
-- Restore folder backups
-- Sync backups to basically any cloud provider using rclone
+## Features
+
+**Dump** postgres databases into files with customizable prefixes and timestamps.  
+Quickly **load** dumps back into the database trough an interactive command or simply load the latest backup.  
+**Sync** backups via rclone to basically any storage provider.
 
 ## Installation / Usage
 1. Clone this repository to your desired location.
@@ -20,9 +21,7 @@ docker compose but it can also be used to backup any other directory.
 4. Run `python backups.py` with your desired command line arguments
 
 ```
-usage: backups.py [-h] [-d] [-b] [-l] [-L LOAD_SPECIFIC] [-r]
-                  [-R RESTORE_SPECIFIC] [-o DELETE]
-                  [config]
+usage: backups.py [-h] [-d] [-l] [-L LOAD_SPECIFIC] [-s] [-v] [config]
 
 positional arguments:
   config                config from config.ini that should be used
@@ -30,16 +29,21 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -d, --dump            dump postgres database
-  -b, --backup          create postgres folder backup
   -l, --load            load latest dump
   -L LOAD_SPECIFIC, --load-specific LOAD_SPECIFIC
                         load specified dump
-  -r, --restore         restore latest backup
-  -R RESTORE_SPECIFIC, --restore-specific RESTORE_SPECIFIC
-                        restore specified backup
-  -o DELETE, --delete DELETE
-                        delete backups older than a certain amount of days
+  -s, --sync            sync backups with rclone target
+  -v, --verbose         enables debugging output
 ```
+
+### Cron Example
+```sh
+0 5 * * * cd /usr/src/backup && /usr/bin/python /usr/src/backups/backups.py -d homepage
+```
+
+### rclone
+If you want to use the rclone features you will need to install rclone.
+Visit their website for more info https://rclone.org/
 
 ## License
 See [LICENS.md](https://github.com/vabene1111/DockerPostgresBackups/blob/master/LICENSE.md)
