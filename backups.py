@@ -45,7 +45,7 @@ def parse_args():
     parser.add_argument('config', help="config from config.ini that should be used", nargs='?', default='default')
 
     parser.add_argument("-d", '--dump', help="dump postgres database", action="store_true")
-
+    
     parser.add_argument("-l", '--load', help="load latest dump", action="store_true")
     parser.add_argument("-L", '--load-specific', help="load specified dump")
 
@@ -193,6 +193,8 @@ def delete_old():
 
 
 def load_config(config_name):
+    # config parser infos https://docs.python.org/3/library/configparser.html
+    # config.sections() all sections for all parameter
     global storage_dir, filename_prefix, timestamp, timestamp_format, pg_data_dir, pg_docker_container, pg_docker_user, rclone_target, rclone_path, delete_days, docker_compose_path
 
     config = configparser.ConfigParser()
