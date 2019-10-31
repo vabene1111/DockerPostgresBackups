@@ -34,6 +34,11 @@ DUMP_EXTENSION = '.sql'
 DEBUG = False
 
 
+def debug(msg):
+    if DEBUG:
+        print(msg)
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
 
@@ -44,7 +49,7 @@ def parse_args():
     parser.add_argument("-l", '--load', help="load latest dump", action="store_true")
     parser.add_argument("-L", '--load-specific', help="load specified dump")
 
-    parser.add_argument("-s", '--sync', help="sync backups with rclone target",  action="store_true")
+    parser.add_argument("-s", '--sync', help="sync backups with rclone target", action="store_true")
 
     parser.add_argument("-v", '--verbose', help="enables debugging output", action="store_true")
 
@@ -74,21 +79,21 @@ def create_pg_dump():
     print("Creating DB dump ... ")
     os.chdir(docker_compose_path)
     cmd_container_up = 'docker-compose up -d ' + pg_docker_container
-    if DEBUG:
-        print('starting container: ' + cmd_container_up)
+
+    debug('starting container: ' + cmd_container_up)
+
     out = os.popen(cmd_container_up).read()
 
     cmd_container_dump = 'docker-compose exec ' + pg_docker_container + ' pg_dumpall -U ' + pg_docker_user + '-f /var/lib/postgresql/data/dump' + DUMP_EXTENSION
-    os.system(cmd_container_dump)
 
-    if DEBUG:
-        print('creating dump: ' + cmd_container_dump)
+    debug('creating dump: ' + cmd_container_dump)
+
+    os.system(cmd_container_dump)
 
     mv = 'mv ' + pg_data_dir + 'dump' + DUMP_EXTENSION + ' ' + get_dump_path()
     os.system(mv)
 
-    if DEBUG:
-        print('moving backup')
+    debug('moving backup with: ' + mv)
 
     if 'is up-to-date' in out:
         os.system('docker-compose stop ' + pg_docker_container)
