@@ -84,7 +84,7 @@ def create_pg_dump():
 
     out = os.popen(cmd_container_up).read()
 
-    cmd_container_dump = 'docker-compose exec ' + pg_docker_container + ' pg_dumpall -U ' + pg_docker_user + '-f /var/lib/postgresql/data/dump' + DUMP_EXTENSION
+    cmd_container_dump = 'docker-compose exec ' + pg_docker_container + ' pg_dumpall -U ' + pg_docker_user + ' -f /var/lib/postgresql/data/dump' + DUMP_EXTENSION
 
     debug('creating dump: ' + cmd_container_dump)
 
