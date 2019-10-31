@@ -18,19 +18,17 @@ import tarfile
 import time
 
 storage_dir = ''
-dump_filename = ''
-backup_filename = ''
-backup_timestamp = True
-backup_timestamp_format = ''
-backup_source = ''
+filename_prefix = ''
+timestamp = True
+timestamp_format = ''
 docker_compose_path = ''
+pg_data_dir = ''
 pg_docker_container = ''
 pg_docker_user = ''
 rclone_target = ''
 rclone_path = ''
 delete_days = 7
 
-BACKUP_EXTENSION = '.tar.gz'
 DUMP_EXTENSION = '.sql'
 
 DEBUG = False
@@ -42,13 +40,9 @@ def parse_args():
     parser.add_argument('config', help="config from config.ini that should be used", nargs='?', default='default')
 
     parser.add_argument("-d", '--dump', help="dump postgres database", action="store_true")
-    parser.add_argument("-b", '--backup', help="create postgres folder backup", action="store_true")
 
     parser.add_argument("-l", '--load', help="load latest dump", action="store_true")
     parser.add_argument("-L", '--load-specific', help="load specified dump")
-
-    parser.add_argument("-r", '--restore', help="restore latest backup", action="store_true")
-    parser.add_argument("-R", '--restore-specific', help="restore specified backup")
 
     parser.add_argument("-s", '--sync', help="sync backups with rclone target",  action="store_true")
 
@@ -57,61 +51,23 @@ def parse_args():
     return parser.parse_args()
 
 
-def make_backup_dir():
+def make_storage_dir():
     if not os.path.exists(storage_dir):
-        print('Created Backup directory!')
+        print('Created storage directory!')
         os.makedirs(storage_dir)
 
 
 def file_timestamp(file):
-    if backup_timestamp:
+    if timestamp:
         now = datetime.datetime.now()
-        timestamp = now.strftime(backup_timestamp_format)
+        ts = now.strftime(timestamp_format)
 
-        file = file + timestamp
+        file = file + ts
     return file
 
 
-def get_backup_path():
-    return file_timestamp(storage_dir + backup_filename) + '.tar.gz'
-
-
-def create_backup():
-    def reset(tarinfo):
-        tarinfo.uid = tarinfo.gid = 0
-        tarinfo.uname = tarinfo.gname = "root"  # TODO verify permissions work
-        return tarinfo
-
-    print("Creating backup ...")
-    os.chdir(docker_compose_path)
-    os.system('docker-compose stop ' + pg_docker_container)
-
-    tar = tarfile.open(get_backup_path(), "w:gz")
-    tar.add(backup_source, filter=reset)
-    tar.close()
-
-    os.system('docker-compose up -d ' + pg_docker_container)
-    print("Backup created!")
-
-
-def restore_backup(filename):
-    print("Restoring backup ...")
-    os.chdir(docker_compose_path)
-    os.system('docker-compose stop ' + pg_docker_container)
-
-    if os.path.exists(backup_source):
-        shutil.rmtree(backup_source, ignore_errors=False, onerror=None)
-
-    tar = tarfile.open(filename)
-    tar.extractall(path=(os.path.abspath(os.path.join(backup_source, '..'))))
-    tar.close()
-
-    os.system('docker-compose up -d ' + pg_docker_container)
-    print("Backup restored!")
-
-
 def get_dump_path():
-    return file_timestamp(storage_dir + dump_filename) + '.sql'
+    return file_timestamp(storage_dir + filename_prefix) + DUMP_EXTENSION
 
 
 def create_pg_dump():
@@ -122,13 +78,17 @@ def create_pg_dump():
         print('starting container: ' + cmd_container_up)
     out = os.popen(cmd_container_up).read()
 
-    cmd_container_dump = 'docker-compose exec ' + pg_docker_container + ' pg_dumpall -U ' + pg_docker_user + ' > ' + get_dump_path()
+    cmd_container_dump = 'docker-compose exec ' + pg_docker_container + ' pg_dumpall -U ' + pg_docker_user + '-f /var/lib/postgresql/data/dump' + DUMP_EXTENSION
+    os.system(cmd_container_dump)
+
     if DEBUG:
         print('creating dump: ' + cmd_container_dump)
-        test = os.popen('docker-compose exec ' + pg_docker_container + ' pg_dumpall -U ' + pg_docker_user).read()
-        print(test[0:100])
 
-    os.system(cmd_container_dump)
+    mv = 'mv ' + pg_data_dir + 'dump' + DUMP_EXTENSION + ' ' + get_dump_path()
+    os.system(mv)
+
+    if DEBUG:
+        print('moving backup')
 
     if 'is up-to-date' in out:
         os.system('docker-compose stop ' + pg_docker_container)
@@ -140,8 +100,8 @@ def load_pg_dump(file):
     os.chdir(docker_compose_path)
     os.system('docker-compose stop ' + pg_docker_container)
 
-    if os.path.exists(backup_source):
-        shutil.rmtree(backup_source, ignore_errors=False, onerror=None)
+    if os.path.exists(pg_data_dir):
+        shutil.rmtree(pg_data_dir, ignore_errors=False, onerror=None)
 
     os.system('docker-compose up -d ' + pg_docker_container)
 
@@ -173,30 +133,22 @@ def choose_file(extension):
     file_index = int(input())
     filename = storage_dir + dir_list[file_index]
 
-    if extension == DUMP_EXTENSION:
-        load_pg_dump(filename)
-
-    if extension == BACKUP_EXTENSION:
-        restore_backup(filename)
+    load_pg_dump(filename)
 
 
-def get_latest(extension):
-    print('Searching latest ' + extension)
-    list_of_files = glob.glob(storage_dir + '*' + extension)
+def get_latest():
+    print('Searching latest ' + DUMP_EXTENSION)
+    list_of_files = glob.glob(storage_dir + '*' + DUMP_EXTENSION)
 
     if len(list_of_files) == 0:
-        print('There where no ' + extension + ' files found that could be restored!')
+        print('There where no ' + DUMP_EXTENSION + ' files found that could be restored!')
         return
 
     filename = max(list_of_files, key=os.path.getctime)
 
     print("Found " + filename)
 
-    if extension == DUMP_EXTENSION:
-        load_pg_dump(filename)
-
-    if extension == BACKUP_EXTENSION:
-        restore_backup(filename)
+    load_pg_dump(filename)
 
 
 def sync_storage():
@@ -204,9 +156,13 @@ def sync_storage():
         return
 
     print('Starting backup sync ...')
+
+    cmd = 'rclone sync ' + storage_dir + ' ' + rclone_target + ':' + rclone_path
     if DEBUG:
-        print('rclone command: rclone sync ' + storage_dir + ' ' + rclone_target + ':' + rclone_path)
-    os.system('rclone sync ' + storage_dir + ' ' + rclone_target + ':' + rclone_path)
+        print('rclone command: ' + cmd)
+
+    os.system(cmd)
+
     print('Storage directory synced!')
 
 
@@ -232,18 +188,17 @@ def delete_old():
 
 
 def load_config(config_name):
-    global storage_dir, dump_filename, backup_filename, backup_timestamp, backup_timestamp_format, backup_source, pg_docker_container, pg_docker_user, rclone_target, rclone_path, delete_days, docker_compose_path
+    global storage_dir, filename_prefix, timestamp, timestamp_format, pg_data_dir, pg_docker_container, pg_docker_user, rclone_target, rclone_path, delete_days, docker_compose_path
 
     config = configparser.ConfigParser()
     config.read("config.ini")
 
     storage_dir = config.get(config_name, "storage_dir")
-    dump_filename = config.get(config_name, "dump_filename")
-    backup_filename = config.get(config_name, "backup_filename")
-    backup_timestamp = config.get(config_name, "backup_timestamp")
-    backup_timestamp_format = config.get(config_name, "backup_timestamp_format")
-    backup_source = config.get(config_name, "backup_source")
+    filename_prefix = config.get(config_name, "filename_prefix")
+    timestamp = config.get(config_name, "timestamp")
+    timestamp_format = config.get(config_name, "timestamp_format")
     docker_compose_path = config.get(config_name, "docker_compose_path")
+    pg_data_dir = config.get(config_name, "pg_data_dir")
     pg_docker_container = config.get(config_name, "pg_docker_container")
     pg_docker_user = config.get(config_name, "pg_docker_user")
     rclone_target = config.get(config_name, "rclone_target")
@@ -256,8 +211,8 @@ def load_config(config_name):
     if not docker_compose_path.endswith("/"):
         docker_compose_path += "/"
 
-    if not backup_source.endswith("/"):
-        backup_source += "/"
+    if not pg_data_dir.endswith("/"):
+        pg_data_dir += "/"
 
 
 def main():
@@ -271,10 +226,7 @@ def main():
         print('Loading Config:' + args.config)
     load_config(args.config)
 
-    make_backup_dir()
-
-    if args.backup:
-        create_backup()
+    make_storage_dir()
 
     if args.dump:
         create_pg_dump()
@@ -282,14 +234,8 @@ def main():
     if args.load_specific:
         choose_file(DUMP_EXTENSION)
 
-    if args.restore_specific:
-        choose_file(BACKUP_EXTENSION)
-
     if args.load:
-        get_latest(DUMP_EXTENSION)
-
-    if args.restore:
-        get_latest(BACKUP_EXTENSION)
+        get_latest()
 
     if args.backup or args.dump:
         delete_old()
