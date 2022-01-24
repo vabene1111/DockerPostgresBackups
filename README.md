@@ -1,7 +1,7 @@
 # Warning
-This script is still WIP. It works pretty well right now but sometimes the load command needs 
-to be executed twice to restore a db.
-More features and stability improvements are planned.
+This script is just an old relict of me not having found any appropriate tool to backup postgres databases inside docker containers. 
+In the meantime several other peopel have build better systems so I do NOT recommend using this script, its just here for legacy purposes and if anyone finds the code useful.
+You may want to try this tool https://github.com/prodrigestivill/docker-postgres-backup-local
 
 # Docker Postgres Backup
 This script is primarily intended to make it easier to backup and restore postgres database containers running with 
