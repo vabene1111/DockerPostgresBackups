@@ -42,7 +42,7 @@ def debug(msg):
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('config', help="config from config.ini that should be used", nargs='?', default='default')
+    parser.add_argument('config', help="config from config.ini that should be used", nargs='?', default='DEFAULT')
 
     parser.add_argument("-d", '--dump', help="dump postgres database", action="store_true")
     
