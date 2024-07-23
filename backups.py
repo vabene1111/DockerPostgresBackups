@@ -49,7 +49,8 @@ def parse_args():
     parser.add_argument("-l", '--load', help="load latest dump", action="store_true")
     parser.add_argument("-L", '--load-specific', help="load specified dump")
 
-    parser.add_argument("-s", '--sync', help="sync backups with rclone target", action="store_true")
+    parser.add_argument("-s", '--sync', help="pushes/syncs backups with rclone target", action="store_true")
+    parser.add_argument("-p", '--pull', help="pulls backups from rclone target", action="store_true")
 
     parser.add_argument("-v", '--verbose', help="enables debugging output", action="store_true")
 
@@ -171,6 +172,21 @@ def sync_storage():
     print('Storage directory synced!')
 
 
+def pull_storage():
+    if rclone_target == '':
+        return
+
+    print('Starting retrieving backups from sync target ...')
+
+    cmd = 'rclone sync '  + rclone_target + ':' + rclone_path + ' ' + storage_dir
+    if DEBUG:
+        print('rclone command: ' + cmd)
+
+    os.system(cmd)
+
+    print('Storage directory pulled!')
+
+
 def delete_old():
     if delete_days == -1:
         return
@@ -249,6 +265,9 @@ def main():
 
     if args.dump or args.sync:
         sync_storage()
+
+    if args.pull:
+        pull_storage()
 
 
 if __name__ == "__main__":
