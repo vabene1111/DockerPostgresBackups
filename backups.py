@@ -79,13 +79,13 @@ def get_dump_path():
 def create_pg_dump():
     print("Creating DB dump ... ")
     os.chdir(docker_compose_path)
-    cmd_container_up = '/usr/local/bin/docker compose up -d ' + pg_docker_container
+    cmd_container_up = '/usr/bin/docker compose up -d ' + pg_docker_container
 
     debug('starting container: ' + cmd_container_up)
 
     out = os.popen(cmd_container_up).read()
 
-    cmd_container_dump = '/usr/local/bin/docker compose exec -T ' + pg_docker_container + ' pg_dumpall -U ' + pg_docker_user + ' -f /var/lib/postgresql/data/dump' + DUMP_EXTENSION
+    cmd_container_dump = '/usr/bin/docker compose exec -T ' + pg_docker_container + ' pg_dumpall -U ' + pg_docker_user + ' -f /var/lib/postgresql/data/dump' + DUMP_EXTENSION
 
     debug('creating dump: ' + cmd_container_dump)
 
@@ -97,22 +97,22 @@ def create_pg_dump():
     debug('moving backup with: ' + mv)
 
     if 'is up-to-date' in out:
-        os.system('/usr/local/bin/docker compose stop ' + pg_docker_container)
+        os.system('/usr/bin/docker compose stop ' + pg_docker_container)
     print("DB dump created in " + get_dump_path())
 
 
 def load_pg_dump(file):
     print("Loading DB dump ... ")
     os.chdir(docker_compose_path)
-    os.system('/usr/local/bin/docker compose stop ' + pg_docker_container)
+    os.system('/usr/bin/docker compose stop ' + pg_docker_container)
 
     if os.path.exists(pg_data_dir):
         shutil.rmtree(pg_data_dir, ignore_errors=False, onerror=None)
 
-    os.system('/usr/local/bin/docker compose up -d ' + pg_docker_container)
+    os.system('/usr/bin/docker compose up -d ' + pg_docker_container)
 
     time.sleep(2)
-    os.system('/usr/local/bin/docker compose exec -T ' + pg_docker_container + ' psql -U ' + pg_docker_user + ' postgres < ' + file)
+    os.system('/usr/bin/docker compose exec -T ' + pg_docker_container + ' psql -U ' + pg_docker_user + ' postgres < ' + file)
 
     print("DB dump loaded!")
 
